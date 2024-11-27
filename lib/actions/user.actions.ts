@@ -1,74 +1,82 @@
 'use server';
 
-import { ID } from "node-appwrite";
+import { Account, AppwriteException, Client, ID } from "node-appwrite";
 import { createAdminClient, createSessionClient } from "../appwrite";
 import { cookies } from "next/headers";
 import { parseStringify } from "../utils";
 
 export const signIn = async ({email, password}:signInProps)=>{
-    try {
-        const { account } = await createAdminClient();
-        const response = await account.createEmailPasswordSession(email, password);
+  try {
+    // console.log('Starting sign in process for email:', email);
+    
+    // Create client without API key for authentication
+    const { account } = await createAdminClient();
+    // console.log('Client created successfully');
 
-        return parseStringify(response);
-        
-    } catch (error) {
-        console.log('Error',error);
-    }
+    // Create session
+    // console.log('Attempting to create email password session...');
+    const session = await account.createEmailPasswordSession(email, password);
+    // console.log('Session created successfully:', session.$id);
+
+    // Set cookie
+    // console.log('Setting session cookie...');
+    cookies().set("appwrite-session", session.secret, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+    });
+    // console.log('Cookie set successfully');
+
+    // Create a new client with the session
+    const sessionClient = new Client()
+        .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
+        .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT!)
+        .setSession(session.secret);
+
+    const sessionAccount = new Account(sessionClient);
+    
+    // Get user details
+    // console.log('Fetching user details...');
+    const user = await sessionAccount.get();
+    // console.log('User details retrieved successfully');
+
+    return parseStringify(user);
+} catch (error) {
+    console.error('Sign in error:', error);
+    throw error;
+}
 }
 
-export const signUp = async (userData : SignUpParams)=>{
+export const signUp = async ({ password, ...userData }: SignUpParams) => {
+  const { email, firstName, lastName } = userData;
+  
+  let newUserAccount;
 
-    const { email, password, firstName, lastName } = userData;
+  try {
+    const { account} = await createAdminClient();
 
-    try {
-        
-        const { account } = await createAdminClient();
+    newUserAccount = await account.create(
+      ID.unique(), 
+      email, 
+      password, 
+      `${firstName} ${lastName}`
+    );
 
-        const newUserAccount = await account.create(
-                ID.unique(), 
-                email, 
-                password, 
-                `${firstName} ${lastName}`
-            );
+    const session = await account.createEmailPasswordSession(email, password);
 
-        // if(!newUserAccount) throw new Error('Error creating user')
+    cookies().set("appwrite-session", session.secret, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "strict",
+      secure: true,
+    });
 
-        // const dwollaCustomerUrl = await createDwollaCustomer({
-        //     ...userData,
-        //     type: 'personal'
-        // })
-
-        // if(!dwollaCustomerUrl) throw new Error('Error creating Dwolla customer')
-
-        // const dwollaCustomerId = extractCustomerIdFromUrl(dwollaCustomerUrl);
-
-        // const newUser = await database.createDocument(
-        //     DATABASE_ID!,
-        //     USER_COLLECTION_ID!,
-        //     ID.unique(),
-        //     {
-        //         ...userData,
-        //         userId: newUserAccount.$id,
-        //         dwollaCustomerId,
-        //         dwollaCustomerUrl
-        //     }
-        // )
-
-        const session = await account.createEmailPasswordSession(email, password);
-
-        cookies().set("appwrite-session", session.secret, {
-            path: "/",
-            httpOnly: true,
-            sameSite: "strict",
-            secure: true,
-        });
-
-        return parseStringify(newUserAccount);
-
-    } catch (error) {
-        console.log('Error',error);
-    }
+    return parseStringify(newUserAccount);
+  } catch (error) {
+    console.error('Error', error);
+  }
 }
 
 export async function getLoggedInUser() {
@@ -79,10 +87,10 @@ export async function getLoggedInUser() {
     // const user = await getUserInfo({ userId: result.$id})
 
     // return parseStringify(user);
-    console.log(result);
+    // console.log(result);
     return parseStringify(result);
   } catch (error) {
-    // console.log(error)
+    console.log(error)
     return null;
   }
 }
