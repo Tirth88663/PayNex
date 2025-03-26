@@ -23,6 +23,8 @@ if(!accounts) {
     return <div>No accounts found</div>;
   } ;
 
+  console.log('accountsfor trans :',accounts);
+
 const accounntsData = accounts?.data || [];
 const appwriteItemId = (id as string) || accounntsData[0]?.appwriteItemId;
 
@@ -50,7 +52,7 @@ console.log(' accounntsData,account :',{
         </header>
         <RecentTransactions 
         accounts={accounntsData}
-        transactions={accounts?.transactions}
+        transactions={account?.transactions}
         appwriteItemId={appwriteItemId}
         page={currentPage}
         />
