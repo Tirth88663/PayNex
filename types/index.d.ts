@@ -102,6 +102,9 @@ declare type AccountTypes =
 declare type Category = "Food and Drink" | "Travel" | "Transfer";
 
 declare type CategoryCount = {
+  totalAmount: number;
+  creditAmount: any;
+  debitAmount: any;
   name: string;
   count: number;
   totalCount: number;
@@ -246,6 +249,7 @@ declare interface TransactionTableProps {
 
 declare interface CategoryProps {
   category: CategoryCount;
+  transactions: Transaction[];
 }
 
 declare interface DoughnutChartProps {

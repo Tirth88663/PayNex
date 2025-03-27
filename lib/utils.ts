@@ -133,37 +133,48 @@ export function getAccountTypeColors(type: AccountTypes) {
 export function countTransactionCategories(
   transactions: Transaction[]
 ): CategoryCount[] {
-  const categoryCounts: { [category: string]: number } = {};
+  const categoryData: { 
+    [category: string]: { 
+      count: number;
+      creditAmount: number;
+      debitAmount: number;
+    } 
+  } = {};
   let totalCount = 0;
 
-  // Iterate over each transaction
-  transactions &&
-    transactions.forEach((transaction) => {
-      // Extract the category from the transaction
-      const category = transaction.category;
+  transactions && transactions.forEach((transaction) => {
+    const category = transaction.category;
+    const amount = Math.abs(transaction.amount);
+    const isDebit = transaction.type === 'debit' || transaction.amount < 0;
 
-      // If the category exists in the categoryCounts object, increment its count
-      if (categoryCounts.hasOwnProperty(category)) {
-        categoryCounts[category]++;
+    if (categoryData.hasOwnProperty(category)) {
+      categoryData[category].count++;
+      if (isDebit) {
+        categoryData[category].debitAmount += amount;
       } else {
-        // Otherwise, initialize the count to 1
-        categoryCounts[category] = 1;
+        categoryData[category].creditAmount += amount;
       }
+    } else {
+      categoryData[category] = {
+        count: 1,
+        creditAmount: isDebit ? 0 : amount,
+        debitAmount: isDebit ? amount : 0
+      };
+    }
+    totalCount++;
+  });
 
-      // Increment total count
-      totalCount++;
-    });
-
-  // Convert the categoryCounts object to an array of objects
-  const aggregatedCategories: CategoryCount[] = Object.keys(categoryCounts).map(
+  const aggregatedCategories: CategoryCount[] = Object.keys(categoryData).map(
     (category) => ({
       name: category,
-      count: categoryCounts[category],
+      count: categoryData[category].count,
+      creditAmount: categoryData[category].creditAmount,
+      debitAmount: categoryData[category].debitAmount,
+      totalAmount: categoryData[category].creditAmount - categoryData[category].debitAmount,
       totalCount,
     })
   );
 
-  // Sort the aggregatedCategories array by count in descending order
   aggregatedCategories.sort((a, b) => b.count - a.count);
 
   return aggregatedCategories;

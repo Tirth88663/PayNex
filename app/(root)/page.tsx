@@ -59,7 +59,7 @@ console.log(' accounntsData,account :',{
       </div>
       <RightSidebar
         user={loggedIn}
-        transactions={accounts?.transactions}
+        transactions={account?.transactions}
         banks={accounntsData?.slice(0,2)}
       />
     </section>

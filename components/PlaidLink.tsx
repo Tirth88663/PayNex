@@ -4,6 +4,7 @@ import {PlaidLinkOnSuccess , PlaidLinkOptions, usePlaidLink } from 'react-plaid-
 import { useRouter } from 'next/navigation';
 import { createLinkToken, exchangePublicToken } from '@/lib/actions/user.actions';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const PlaidLink = ({user, variant}: PlaidLinkProps) => {
     const router = useRouter();
@@ -57,15 +58,29 @@ const PlaidLink = ({user, variant}: PlaidLinkProps) => {
           <p className='hiddenl text-[16px] font-semibold text-black-2 xl:block'>Connect bank</p>
         </Button>
     ): (
-         <Button onClick={() => open()} className="plaidlink-default">
-         <Image
-            src="/icons/connect-bank.svg"
-            alt="connect bank"
-            width={24}
-            height={24}
-          />
-          <p className='text-[16px] font-semibold text-black-2'>Connect bank</p>
-        </Button>
+        //  <Button onClick={() => open()} className="plaidlink-default">
+        //  <Image
+        //     src="/icons/connect-bank.svg"
+        //     alt="connect bank"
+        //     width={24}
+        //     height={24}
+        //   />
+        //   <p className='text-[16px] font-semibold text-black-2'>Connect bank</p>
+        // </Button>
+       <div 
+            onClick={() => open()} 
+            className="flex gap-2 cursor-pointer"
+        >
+            <Image 
+               src="/icons/plus.svg"
+              width={20}
+              height={20}
+              alt="plus"
+            />
+            <h2 className="text-14 font-semibold text-gray-600">
+              Add Bank
+            </h2>
+        </div>
     )}
     </>
   )
